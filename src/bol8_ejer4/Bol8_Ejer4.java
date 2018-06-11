@@ -6,8 +6,16 @@
 package bol8_ejer4;
 
 import java.awt.Color;
+import java.awt.MenuBar;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 
 /**
@@ -29,10 +37,39 @@ class Principal extends JFrame implements ActionListener {
     JLabel aciertos;
     JLabel[] arrayAciertosErrores;
     int xx = 5;
+    String nombre;
+    int puntuacion;
+    boolean bandera;
+
+    String ruta = System.getProperty("user.home") + "/.records.txt";
+
+    JMenuBar barra;
+    JMenu archivo;
+    JMenuItem guardar;
+    JMenuItem records;
 
     public Principal() {
         super("Lotería primitiva");
         this.setLayout(null);
+
+        guardar = new JMenuItem("Guardar");
+        guardar.setMnemonic('G');
+        guardar.addActionListener(this);
+        guardar.setName("Guardar");
+
+        records = new JMenuItem("Records");
+        records.setMnemonic('R');
+        records.addActionListener(this);
+        records.setName("Records");
+
+        archivo = new JMenu("Archivo");
+        archivo.setMnemonic('A');
+        archivo.add(guardar);
+        archivo.add(records);
+
+        barra = new JMenuBar();
+        barra.add(archivo);
+        this.setJMenuBar(barra);
 
         arrayNumeros = new JCheckBox[49];
         for (int i = 0; i < 49; i++) {
@@ -60,6 +97,15 @@ class Principal extends JFrame implements ActionListener {
 
         numerosSeleccionados = new ArrayList<>();
         numerosAleatorios = new ArrayList<>();
+        arrayAciertosErrores = new JLabel[6];
+        for (int i = 0; i < 6; i++) {
+            aciertos = new JLabel();
+            aciertos.setSize(20, 20);
+            aciertos.setLocation(xx, numeroAciertos.getY() + 50);
+            arrayAciertosErrores[i] = aciertos;
+            this.add(aciertos);
+            xx += 30;
+        }
     }
 
     private JCheckBox crearNumero(int nombre) {
@@ -72,39 +118,62 @@ class Principal extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        for (int i = 0; i < arrayNumeros.length; i++) {
-            arrayNumeros[i].setEnabled(false);
-            arrayNumeros[i].remove(this);
+        if (e.getSource() == jugar) {
+            for (int i = 0; i < arrayNumeros.length; i++) {
+                arrayNumeros[i].setEnabled(false);
+                arrayNumeros[i].remove(this);
+            }
+
+            numerosAcertados = new ArrayList<>();
+            numerosAleatorios = numerosAleatorios(numerosAleatorios);
+            comprobarAciertos(numerosSeleccionados, numerosAleatorios);
+            for (Integer numero : numerosSeleccionados) {
+                System.out.print(numero + " ");
+            }
+            System.out.println("");
+            for (Integer numero : numerosAleatorios) {
+                System.out.print(numero + " ");
+            }
+            System.out.println("");
+            numerosAcertados.removeAll(numerosAcertados);
+            numerosAleatorios.removeAll(numerosAleatorios);
+            numerosSeleccionados.removeAll(numerosSeleccionados);
+            contSeleccionados = 0;
+            for (int i = 0; i < arrayNumeros.length; i++) {
+                arrayNumeros[i].setEnabled(true);
+                arrayNumeros[i].setSelected(false);
+            }
+            jugar.setEnabled(false);
         }
-        arrayAciertosErrores = new JLabel[6];
-        for (int i = 0; i < 6; i++) {
-            aciertos = new JLabel();
-            aciertos.setSize(20, 20);
-            aciertos.setLocation(xx, numeroAciertos.getY() + 50);
-            arrayAciertosErrores[i] = aciertos;
-            this.add(aciertos);
-            xx += 30;
+        if ("Guardar".equals(((JMenuItem) e.getSource()).getName())) {
+            Guardado g = new Guardado(this);
+            g.pack();
+            g.setLocationRelativeTo(null);
+            g.setVisible(true);
+            if (bandera) {
+                guardar();
+            }
         }
-        numerosAcertados = new ArrayList<>();
-        numerosAleatorios = numerosAleatorios(numerosAleatorios);
-        comprobarAciertos(numerosSeleccionados, numerosAleatorios);
-        for (Integer numero : numerosSeleccionados) {
-            System.out.print(numero + " ");
+
+        if ("Records".equals(((JMenuItem) e.getSource()).getName())) {
+            File f = new File(ruta);
+            DefaultListModel<String> modelo=new DefaultListModel<>();
+            int cont=0;
+            try (Scanner s = new Scanner(f)) {
+                while (s.hasNext()){
+                    String elemento=s.nextLine();
+                    modelo.add(cont, elemento);
+                    cont++;
+                }
+                
+                RecordsForm rc = new RecordsForm();
+                rc.pack();
+                rc.setLocationRelativeTo(null);
+                rc.setVisible(true);
+            } catch (FileNotFoundException ex) {
+                JOptionPane.showMessageDialog(null, "Error en el archivo");
+            }
         }
-        System.out.println("");
-        for (Integer numero : numerosAleatorios) {
-            System.out.print(numero + " ");
-        }
-        System.out.println("");
-        numerosAcertados.removeAll(numerosAcertados);
-        numerosAleatorios.removeAll(numerosAleatorios);
-        numerosSeleccionados.removeAll(numerosSeleccionados);
-        contSeleccionados=0;
-        for (int i = 0; i < arrayNumeros.length; i++) {
-            arrayNumeros[i].setEnabled(true);
-            arrayNumeros[i].setSelected(false);
-        }
-        jugar.setEnabled(false);
     }
 
     private class MouseHandler extends MouseAdapter {
@@ -183,6 +252,15 @@ class Principal extends JFrame implements ActionListener {
         numeroAciertos.setText("Has acertado " + cont);
         numeroAciertos.setSize(numeroAciertos.getPreferredSize());
         System.out.println("Has tenido " + cont + " aciertos");
+    }
+
+    private void guardar() {
+        try (PrintWriter p = new PrintWriter(new FileWriter(ruta, true))) {
+            p.println(nombre + " " + puntuacion);
+        } catch (Exception e) {
+            System.out.println(e.toString());
+            JOptionPane.showMessageDialog(null, "Error en el guardado");
+        }
     }
 
 }
