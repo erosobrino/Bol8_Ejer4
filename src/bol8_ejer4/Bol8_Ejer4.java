@@ -40,6 +40,7 @@ class Principal extends JFrame implements ActionListener {
     String nombre;
     int puntuacion;
     boolean bandera;
+    DefaultListModel<String> modelo;
 
     String ruta = System.getProperty("user.home") + "/.records.txt";
 
@@ -119,6 +120,7 @@ class Principal extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == jugar) {
+            puntuacion = 0;
             for (int i = 0; i < arrayNumeros.length; i++) {
                 arrayNumeros[i].setEnabled(false);
                 arrayNumeros[i].remove(this);
@@ -145,33 +147,35 @@ class Principal extends JFrame implements ActionListener {
             }
             jugar.setEnabled(false);
         }
-        if ("Guardar".equals(((JMenuItem) e.getSource()).getName())) {
-            Guardado g = new Guardado(this);
-            g.pack();
-            g.setLocationRelativeTo(null);
-            g.setVisible(true);
-            if (bandera) {
-                guardar();
-            }
-        }
-
-        if ("Records".equals(((JMenuItem) e.getSource()).getName())) {
-            File f = new File(ruta);
-            DefaultListModel<String> modelo=new DefaultListModel<>();
-            int cont=0;
-            try (Scanner s = new Scanner(f)) {
-                while (s.hasNext()){
-                    String elemento=s.nextLine();
-                    modelo.add(cont, elemento);
-                    cont++;
+        if (e.getSource().getClass() == JMenuItem.class) {
+            if ("Guardar".equals(((JMenuItem) e.getSource()).getName())) {
+                Guardado g = new Guardado(this);
+                g.pack();
+                g.setLocationRelativeTo(null);
+                g.setVisible(true);
+                if (bandera) {
+                    guardar();
                 }
-                
-                RecordsForm rc = new RecordsForm();
-                rc.pack();
-                rc.setLocationRelativeTo(null);
-                rc.setVisible(true);
-            } catch (FileNotFoundException ex) {
-                JOptionPane.showMessageDialog(null, "Error en el archivo");
+            }
+
+            if ("Records".equals(((JMenuItem) e.getSource()).getName())) {
+                File f = new File(ruta);
+                modelo = new DefaultListModel<>();
+                int cont = 0;
+                try (Scanner s = new Scanner(f)) {
+                    while (s.hasNext()) {
+                        String elemento = s.nextLine();
+                        modelo.add(cont, elemento);
+                        cont++;
+                    }
+
+                    RecordsForm rc = new RecordsForm(this);
+                    rc.pack();
+                    rc.setLocationRelativeTo(null);
+                    rc.setVisible(true);
+                } catch (FileNotFoundException ex) {
+                    JOptionPane.showMessageDialog(null, "Error en el archivo");
+                }
             }
         }
     }
@@ -233,22 +237,30 @@ class Principal extends JFrame implements ActionListener {
     }
 
     public void comprobarAciertos(ArrayList<Integer> Jugador, ArrayList<Integer> aleatorios) {
+        for (JLabel lbl : arrayAciertosErrores) {
+            lbl.setForeground(Color.red);
+        }
         int cont = 0;
         for (int i = 0; i < Jugador.size(); i++) {
             for (int j = 0; j < aleatorios.size(); j++) {
                 if (Jugador.get(i).equals(aleatorios.get(j))) {
-                    System.out.println("igual");
-                    System.out.println(j);
+//                    System.out.println("igual");
+//                    System.out.println(j);
                     arrayAciertosErrores[i].setText(Jugador.get(i) + "");
                     arrayAciertosErrores[i].setForeground(Color.GREEN);
                     System.out.println("Has acertado el numero " + Jugador.get(i));
                     cont++;
                 } else {
                     arrayAciertosErrores[i].setText(Jugador.get(i) + "");
-                    arrayAciertosErrores[i].setForeground(Color.red);
+                    if (arrayAciertosErrores[i].getForeground() == Color.GREEN) {
+
+                    } else {
+                        arrayAciertosErrores[i].setForeground(Color.red);
+                    }
                 }
             }
         }
+        puntuacion = cont;
         numeroAciertos.setText("Has acertado " + cont);
         numeroAciertos.setSize(numeroAciertos.getPreferredSize());
         System.out.println("Has tenido " + cont + " aciertos");
