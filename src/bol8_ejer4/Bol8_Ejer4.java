@@ -5,17 +5,10 @@
  */
 package bol8_ejer4;
 
-import java.awt.Color;
-import java.awt.MenuBar;
+import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.*;
+import java.util.*;
 import javax.swing.*;
 
 /**
@@ -33,6 +26,7 @@ class Principal extends JFrame implements ActionListener {
     ArrayList<Integer> numerosAleatorios;
     ArrayList<Integer> numerosSeleccionados;
     ArrayList<Integer> numerosAcertados;
+    ArrayList<Integer> numerosFallados;
     JLabel numeroAciertos;
     JLabel aciertos;
     JLabel[] arrayAciertosErrores;
@@ -120,6 +114,9 @@ class Principal extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == jugar) {
+            for (int i = 0; i < arrayNumeros.length; i++) {
+                arrayNumeros[i].setForeground(null);
+            }
             puntuacion = 0;
             for (int i = 0; i < arrayNumeros.length; i++) {
                 arrayNumeros[i].setEnabled(false);
@@ -127,17 +124,21 @@ class Principal extends JFrame implements ActionListener {
             }
 
             numerosAcertados = new ArrayList<>();
+            numerosFallados = new ArrayList<>();
             numerosAleatorios = numerosAleatorios(numerosAleatorios);
             comprobarAciertos(numerosSeleccionados, numerosAleatorios);
+            System.out.print("Tuyos: ");
             for (Integer numero : numerosSeleccionados) {
                 System.out.print(numero + " ");
             }
             System.out.println("");
+            System.out.print("Aleatorios: ");
             for (Integer numero : numerosAleatorios) {
                 System.out.print(numero + " ");
             }
             System.out.println("");
             numerosAcertados.removeAll(numerosAcertados);
+            numerosFallados.removeAll(numerosFallados);
             numerosAleatorios.removeAll(numerosAleatorios);
             numerosSeleccionados.removeAll(numerosSeleccionados);
             contSeleccionados = 0;
@@ -209,6 +210,7 @@ class Principal extends JFrame implements ActionListener {
                 numerosSeleccionados.remove(numerosSeleccionados.indexOf(numero));
                 contSeleccionados--;
             }
+//            System.out.println(contSeleccionados);
         }
     }
 
@@ -236,7 +238,7 @@ class Principal extends JFrame implements ActionListener {
         return false;
     }
 
-    public void comprobarAciertos(ArrayList<Integer> Jugador, ArrayList<Integer> aleatorios) {
+    public void comprobarAciertosAntiguo(ArrayList<Integer> Jugador, ArrayList<Integer> aleatorios) {
         for (JLabel lbl : arrayAciertosErrores) {
             lbl.setForeground(Color.red);
         }
@@ -260,6 +262,48 @@ class Principal extends JFrame implements ActionListener {
                 }
             }
         }
+        puntuacion = cont;
+        numeroAciertos.setText("Has acertado " + cont);
+        numeroAciertos.setSize(numeroAciertos.getPreferredSize());
+        System.out.println("Has tenido " + cont + " aciertos");
+    }
+
+    public void comprobarAciertos(ArrayList<Integer> Jugador, ArrayList<Integer> aleatorios) {
+        for (JLabel lbl : arrayAciertosErrores) {
+            lbl.setForeground(Color.red);
+        }
+        int cont = 0;
+//        for (int i = 0; i < arrayNumeros.length; i++) {
+//            arrayNumeros[i].setForeground(Color.red);
+//        }
+        for (int i = 0; i < Jugador.size(); i++) {
+            for (int j = 0; j < aleatorios.size(); j++) {
+                if (Jugador.get(i).equals(aleatorios.get(j))) {
+                    numerosAcertados.add(aleatorios.get(j));
+                } else {
+                    numerosFallados.add(aleatorios.get(j));
+                }
+            }
+        }
+        for (int i = 0; i < arrayNumeros.length; i++) {
+            for (int j = 0; j < numerosAcertados.size(); j++) {
+                if (Integer.parseInt(arrayNumeros[i].getName()) == numerosAcertados.get(j)) {
+                    arrayNumeros[i].setForeground(Color.green);
+                    cont++;
+                }
+            }
+        }
+        for (int i = 0; i < arrayNumeros.length; i++) {
+            for (int j = 0; j < numerosFallados.size(); j++) {
+                if (Integer.parseInt(arrayNumeros[i].getName()) == numerosFallados.get(j)) {
+                    if (arrayNumeros[i].getForeground() == Color.GREEN) {
+                    } else {
+                        arrayNumeros[i].setForeground(Color.red);
+                    }
+                }
+            }
+        }
+
         puntuacion = cont;
         numeroAciertos.setText("Has acertado " + cont);
         numeroAciertos.setSize(numeroAciertos.getPreferredSize());
